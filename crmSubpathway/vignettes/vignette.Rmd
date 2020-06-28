@@ -1,0 +1,62 @@
+---
+title: "crmSubpathway: identify cancer-related metabolic subpathways"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{crmSubpathway: identify cancer-related metabolic subpathways}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(crmSubpathway)
+```
+
+## Introduction
+The **crmSubpathway** package is a systematic biological tool to identify cancer-related metabolic subpathways. The main capabilities of this tool are as follows:<br/>
+This function uses the k clique algorithm to split the metabolic pathways in the KEGG database into metabolic subpathways. Subsequently, a stable metabolic subpathway activity matrix is constructed by GSVA or ssGSEA methods. Eventually, cancer-related metabolic subpathways are identified through differential analysis.
+
+## Case procedure
+
+```{r eval=FALSE, include=FALSE}
+# Mining metabolic subpathways
+library(graph);
+library(RBGL);
+library(igraph);
+library(XML);
+file.path<-paste(system.file(package="crmSubpathway"),"/inst/extdata/",sep="")
+file.names<-c("hsa00010.xml","hsa00020.xml")
+spwlist<-k_clique(file.path,file.names)
+```
+
+# Construct metabolic subpathway activity matrix
+```{r message=FALSE, warning=FALSE}
+library(GSVA)
+library(parallel)
+# Get the dataset of metabolic subpathways we have processed.
+Metspwlist<-get("Metspwlist")
+# Get the gene expression profile of the case.
+Geneexp<-get("Geneexp")
+Spwmatrix<-SubpathwayMatrix(Geneexp,Metspwlist)
+head(Spwmatrix)
+```
+
+# Identify cancer-related metabolic subpathways
+```{r message=FALSE, warning=FALSE}
+library(limma)
+# Get the metabolic subpathway matrix.
+Spwmatrix<-get("Spwmatrix")
+spwDF<-CalculateDF(Spwmatrix,colnames(Spwmatrix),"cancer","control")
+```
+
+# Visualize subpathway network data
+```{r fig.height=10, fig.width=10, message=FALSE, warning=FALSE}
+library(igraph)
+plotNetGraph(spwid="00010_1")
+```
